@@ -1,0 +1,32 @@
+name: Reservoir Chain Live (manual)
+
+# 纯手动点火, 不挂定时器(本轮只验"免费的河能驱动链上真计算一步")
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: reservoir-chain-single
+  cancel-in-progress: false
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install numpy
+        run: pip install numpy
+      - name: One reservoir compute tick on the chain
+        run: python tick.py
+      - name: Commit chain state back
+        run: |
+          git config user.name "reservoir-chain-live"
+          git config user.email "reservoir-chain-live@users.noreply.github.com"
+          git add -A chain_compute
+          git commit -m "reservoir tick via ${{ github.event_name }} run ${{ github.run_id }}" || echo "no change"
+          git push
