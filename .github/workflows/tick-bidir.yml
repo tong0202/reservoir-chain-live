@@ -1,0 +1,32 @@
+name: Reservoir Bidir Loop (manual)
+
+# 纯手动点火, 验"免费的河能驱动双向闭环真计算一步"
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: reservoir-bidir-single
+  cancel-in-progress: false
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install numpy
+        run: pip install numpy
+      - name: One bidirectional-loop compute tick on the chain
+        run: python bidir/tick.py
+      - name: Commit chain state back
+        run: |
+          git config user.name "reservoir-chain-live"
+          git config user.email "reservoir-chain-live@users.noreply.github.com"
+          git add -A bidir/chain_bidir
+          git commit -m "bidir loop tick via ${{ github.event_name }} run ${{ github.run_id }}" || echo "no change"
+          git push
